@@ -1,0 +1,75 @@
+import pandas as pd
+import numpy as np
+import os
+
+# Load the dataset
+try:
+    df = pd.read_csv('2) Stock Prices Data Set.csv')
+    print("Dataset loaded successfully!")
+except FileNotFoundError:
+    print("Error: '2) Stock Prices Data Set.csv' not found. Please ensure the file is in the correct directory.")
+    exit()
+
+# Display original DataFrame
+print("\n--- Original DataFrame Head ---")
+print(df.head())
+
+print("\n--- Original DataFrame Info ---")
+df.info()
+
+# Check for missing values
+print("\n--- Initial Missing Values Check ---")
+print(df.isnull().sum())
+
+# Handle missing values in 'open', 'high', and 'low' columns
+print("\n--- Handling Missing Values (Imputation with Median) ---")
+for col in ['open', 'high', 'low']:
+    if df[col].isnull().sum() > 0:
+        median_val = df[col].median()
+        df[col].fillna(median_val, inplace=True)
+        print(f"Missing values in '{col}' imputed with median: {median_val}")
+
+# Check missing values again
+print("\n--- Missing Values After Imputation ---")
+print(df.isnull().sum())
+
+# Remove duplicate rows
+print(f"\n--- Checking for Duplicate Rows ---")
+initial_duplicates = df.duplicated().sum()
+print(f"Number of duplicate rows before removal: {initial_duplicates}")
+df.drop_duplicates(inplace=True)
+final_duplicates = df.duplicated().sum()
+print(f"Number of duplicate rows after removal: {final_duplicates}")
+
+# Standardize 'date' column
+print("\n--- Standardizing 'date' column ---")
+df['date'] = pd.to_datetime(df['date'], errors='coerce')
+print("Date column converted. Checking for any NaT values introduced during conversion:")
+print(df['date'].isnull().sum())
+print(f"Data type of 'date' column: {df['date'].dtype}")
+
+# Standardize 'symbol' column
+print("\n--- Standardizing 'symbol' column ---")
+print("Unique values in 'symbol' before standardization check (first 20):")
+print(df['symbol'].unique()[:20]) 
+df['symbol'] = df['symbol'].str.strip().str.upper()
+print("\nUnique values in 'symbol' after stripping whitespace and converting to uppercase (first 20):")
+print(df['symbol'].unique()[:20])
+
+# Display final cleaned DataFrame
+print("\n--- Final Cleaned DataFrame Head ---")
+print(df.head())
+
+print("\n--- Final Cleaned DataFrame Info ---")
+df.info()
+
+print("\n--- Final Missing Values Check ---")
+print(df.isnull().sum())
+
+# Define output path
+documents_path = r"C:\Users\sansk\Documents\Codveda technologies"
+output_file_path = os.path.join(documents_path, "Cleaned_Stock_Prices.csv")
+
+# Save cleaned DataFrame
+df.to_csv(output_file_path, index=False)
+print(f"\nCleaned data saved successfully to: {output_file_path}")
