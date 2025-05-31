@@ -1,0 +1,101 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report, confusion_matrix
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+import joblib
+
+# Load dataset
+file_path = r"C:\Users\sansk\Documents\Codveda technologies\3) Sentiment dataset.csv"
+df = pd.read_csv(file_path)
+
+# 1. Preprocessing
+df.drop(columns=['Unnamed: 0', 'Unnamed: 0.1', 'User', 'Timestamp', 'Hashtags'], inplace=True)
+
+# Encode target label
+le = LabelEncoder()
+df['Sentiment'] = le.fit_transform(df['Sentiment'])
+
+# Features and target
+X = df.drop('Sentiment', axis=1)
+y = df['Sentiment']
+
+# Define column types
+text_col = 'Text'
+cat_cols = ['Platform', 'Country']
+num_cols = ['Retweets', 'Likes', 'Year', 'Month', 'Day', 'Hour']
+
+# Preprocessing pipeline
+preprocessor = ColumnTransformer([
+    ('text', TfidfVectorizer(max_features=1000), text_col),
+    ('cat', OneHotEncoder(handle_unknown='ignore'), cat_cols),
+    ('num', StandardScaler(), num_cols)
+])
+
+# Models to evaluate
+models = {
+    'Logistic Regression': LogisticRegression(max_iter=1000),
+    'Decision Tree': DecisionTreeClassifier(),
+    'Random Forest': RandomForestClassifier()
+}
+
+# Train/Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Model training and evaluation
+for name, model in models.items():
+    print(f"\n--- {name} ---")
+    pipeline = Pipeline([
+        ('preprocessor', preprocessor),
+        ('classifier', model)
+    ])
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_test)
+    print(classification_report(y_test, y_pred))
+
+# Confusion matrix for Random Forest
+rf_pipeline = Pipeline([
+    ('preprocessor', preprocessor),
+    ('classifier', RandomForestClassifier())
+])
+rf_pipeline.fit(X_train, y_train)
+y_pred_rf = rf_pipeline.predict(X_test)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(confusion_matrix(y_test, y_pred_rf), annot=True, fmt='d', cmap='Blues')
+plt.title("Confusion Matrix - Random Forest")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.tight_layout()
+plt.savefig(r"C:\Users\sansk\Documents\Codveda technologies\RandomForest_ConfusionMatrix.png")
+plt.show()
+
+# Hyperparameter tuning for Random Forest
+grid_params = {
+    'classifier__n_estimators': [50, 100],
+    'classifier__max_depth': [None, 10, 20]
+}
+grid_search = GridSearchCV(rf_pipeline, grid_params, cv=3, n_jobs=-1, scoring='f1_weighted')
+grid_search.fit(X_train, y_train)
+
+print("\n--- Best Parameters from GridSearchCV ---")
+print(grid_search.best_params_)
+
+best_model = grid_search.best_estimator_
+y_pred_best = best_model.predict(X_test)
+print("\n--- Classification Report (Best Random Forest) ---")
+print(classification_report(y_test, y_pred_best))
+
+# Save final model
+joblib.dump(best_model, r"C:\Users\sansk\Documents\Codveda technologies\Sentiment_Classifier_RF.pkl")
+print("\nModel saved successfully as 'Sentiment_Classifier_RF.pkl'")
