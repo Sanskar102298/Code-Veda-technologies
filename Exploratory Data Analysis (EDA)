@@ -1,0 +1,44 @@
+import numpy as np
+import pandas as pd
+df = pd.read_csv('2) Stock Prices Data Set.csv')  
+print("\n--- Summary Statistics for Numerical Columns ---")
+numerical_columns = df.select_dtypes(include=[np.number]).columns
+for col in numerical_columns:
+    print(f"\nColumn: {col}")
+    print(f"Mean: {df[col].mean()}")
+    print(f"Median: {df[col].median()}")
+    print(f"Mode: {df[col].mode()[0]}")  
+    print(f"Standard Deviation: {df[col].std()}")
+
+
+Summary Statistics for Numerical Columns ---
+
+Column: open
+Mean: 86.35227481611624
+Median: 64.97
+Mode: 70.0
+Standard Deviation: 101.47122779518384
+
+Column: high
+Mean: 87.13256217193604
+Median: 65.56
+Mode: 72.0
+Standard Deviation: 102.31206175533661
+
+Column: low
+Mean: 85.55246746216812
+Median: 64.3537
+Mode: 77.0
+Standard Deviation: 100.57095703268504
+
+Column: close
+Mean: 86.36908207456902
+Median: 64.98
+Mode: 34.5
+Standard Deviation: 101.47240737650641
+
+Column: volume
+Mean: 4253610.897777162
+Median: 2084896.5
+Mode: 1241019
+Standard Deviation: 8232139.235882821
