@@ -1,0 +1,82 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.seasonal import seasonal_decompose
+import os
+
+# 1. Load the time-series dataset
+df = pd.read_csv(r"C:\Users\sansk\Documents\Codveda technologies\cleaned_stock_prices.csv")
+
+save_dir = r"C:\Users\sansk\Documents\Codveda technologies\TimeSeries_Plots"
+os.makedirs(save_dir, exist_ok=True)
+
+# 2. Ensure 'date' is in datetime format and set as index
+df['date'] = pd.to_datetime(df['date'])
+df.set_index('date', inplace=True)
+
+# 3. Sort by date just in case
+df.sort_index(inplace=True)
+
+# 4. Choose a stock symbol to analyze (e.g., 'AAPL')
+symbol = 'AAPL'
+symbol_df = df[df['symbol'] == symbol]
+
+
+# 5. Plot original time series (closing price)
+plt.figure(figsize=(12, 5))
+plt.plot(symbol_df['close'], label='Original Closing Price')
+plt.title('Time Series - Closing Price')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.tight_layout()
+plot_path1 = os.path.join(save_dir, f'{symbol}_ClosingPrice.png')
+plt.savefig(plot_path1)
+print(f"Plot saved: {plot_path1}")
+plt.show()
+
+# 6. Decompose the time series
+# Assumes daily data; set freq='D' or '30' if monthly/weekly
+decomposition = seasonal_decompose(symbol_df['close'], model='additive', period=30)
+
+# Plot decomposition
+decomposition.plot()
+plt.suptitle('Time Series Decomposition - Additive Model', fontsize=16)
+plt.tight_layout()
+decomp_path = os.path.join(save_dir, f'{symbol}_Decomposition.png')
+plt.savefig(decomp_path)
+print(f"Decomposition plot saved: {decomp_path}")
+plt.show()
+
+
+# 7. Moving Average Smoothing
+symbol_df['MA_7'] = symbol_df['close'].rolling(window=7).mean()
+symbol_df['MA_30'] = symbol_df['close'].rolling(window=30).mean()
+
+# Plot smoothed results
+plt.figure(figsize=(12, 5))
+plt.plot(symbol_df['close'], label='Original')
+plt.plot(symbol_df['MA_7'], label='7-Day MA', linestyle='--')
+plt.plot(symbol_df['MA_30'], label='30-Day MA', linestyle='--')
+plt.title('Moving Average Smoothing')
+plt.xlabel('Date')
+plt.ylabel('Closing Price')
+plt.legend()
+plt.tight_layout()
+smooth_path = os.path.join(save_dir, f'{symbol}_MovingAverage.png')
+plt.savefig(smooth_path)
+print(f"Smoothing plot saved: {smooth_path}")
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
