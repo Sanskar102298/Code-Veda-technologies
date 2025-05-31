@@ -2,9 +2,8 @@
 # Stock Market Price Analysis Project
 
 This project implements data preprocessing, sentiment analysis, and linear regression modeling for stock market price prediction and sentiment analysis of market-related text data.
-
-## Project Structure
-
+All required files have been attached to this repository, and the assigned tasks have been completed; please note that some elements may be subject to minor revisions or updates
+Project Structure
        stock-market-analysis
  ┣ 📜 data_cleaning.py
  ┣ 📜 SentimentanalysisGC.py
