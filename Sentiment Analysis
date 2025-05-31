@@ -1,0 +1,109 @@
+# Install required packages
+!pip install nltk pandas tqdm
+
+# Import libraries
+import pandas as pd
+import re
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer, PorterStemmer
+from google.colab import files
+from tqdm import tqdm
+# Download and verify NLTK resources
+def setup_nltk():
+    """Download and verify NLTK resources"""
+    resources = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
+    for resource in resources:
+        try:
+            nltk.data.find(f'tokenizers/{resource}' if resource == 'punkt' else resource)
+            print(f"✓ {resource} is already downloaded")
+        except LookupError:
+            print(f"Downloading {resource}...")
+            nltk.download(resource)
+            print(f"✓ {resource} downloaded successfully")
+
+setup_nltk()
+
+# Initialize preprocessing tools
+stop_words = set(stopwords.words('english'))
+lemmatizer = WordNetLemmatizer()
+stemmer = PorterStemmer()
+
+def preprocess_text(text, use_lemmatization=True):
+    """Preprocess text with options for either lemmatization or stemming"""
+    try:
+        # Convert to string and lowercase
+        text = str(text).lower()
+
+        # Remove punctuation and special characters
+        text = re.sub(r'[^a-zA-Z\s]', '', text)
+
+        # Tokenization with error handling
+        try:
+            tokens = word_tokenize(text)
+        except Exception as e:
+            print(f"Tokenization error: {e}")
+            tokens = text.split()
+
+        # Remove stopwords
+        tokens = [word for word in tokens if word not in stop_words]
+
+        # Lemmatization or Stemming
+        if use_lemmatization:
+            tokens = [lemmatizer.lemmatize(word) for word in tokens]
+        else:
+            tokens = [stemmer.stem(word) for word in tokens]
+
+        return ' '.join(tokens)
+    except Exception as e:
+        print(f"Error in preprocess_text: {e}")
+        return text
+
+# Upload dataset
+print("Please upload your CSV file...")
+uploaded = files.upload()
+filename = next(iter(uploaded))
+
+# Load dataset
+df = pd.read_csv(filename)
+print("Dataset loaded successfully!")
+
+# Display first few rows
+print("\nFirst few rows of the dataset:")
+print(df.head())
+
+import nltk
+nltk.download('punkt_tab')
+
+# Process text data with progress bar
+print("\nProcessing text data...")
+tqdm.pandas()
+df['processed_text_lemmatized'] = df['Text'].progress_apply(
+    lambda x: preprocess_text(x, use_lemmatization=True)
+)
+df['processed_text_stemmed'] = df['Text'].progress_apply(
+    lambda x: preprocess_text(x, use_lemmatization=False)
+)
+
+# Display sample results
+print("\nSample Results:")
+print("\nOriginal vs Processed Text:")
+sample_df = df[['Text', 'processed_text_lemmatized', 'processed_text_stemmed']].head()
+pd.set_option('display.max_colwidth', None)
+print(sample_df)
+
+# Save processed data
+output_filename = 'Preprocessed_Sentiment_Dataset.csv'
+df.to_csv(output_filename, index=False)
+print(f"\nSaving processed data as '{output_filename}'...")
+
+# Download the processed file
+files.download(output_filename)
+
+# Print statistics
+print("\nText Processing Statistics:")
+print(f"Total rows processed: {len(df)}")
+print(f"Average word count before preprocessing: {df['Text'].str.split().str.len().mean():.2f}")
+print(f"Average word count after preprocessing (lemmatized): {df['processed_text_lemmatized'].str.split().str.len().mean():.2f}")
+print(f"Average word count after preprocessing (stemmed): {df['processed_text_stemmed'].str.split().str.len().mean():.2f}")
