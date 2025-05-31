@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+# 1. Load dataset
+df = pd.read_csv(r"C:\Users\sansk\Documents\Codveda technologies\Cleaned_Stock_Prices.csv")
+
+# 2. Select numeric features for clustering
+features = ['open', 'high', 'low', 'close', 'volume']
+df_cluster = df[features].dropna()
+
+# 3. Standardize the dataset
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(df_cluster)
+
+# 4. Elbow Method to determine optimal number of clusters
+inertia = []
+k_range = range(1, 11)
+for k in k_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    kmeans.fit(scaled_data)
+    inertia.append(kmeans.inertia_)
+
+# Plot Elbow Curve
+plt.figure(figsize=(8, 5))
+plt.plot(k_range, inertia, marker='o')
+plt.title('Elbow Method For Optimal k')
+plt.xlabel('Number of Clusters (k)')
+plt.ylabel('Inertia')
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(r"C:\Users\sansk\Documents\Codveda technologies\KMeans_Elbow.png")
+plt.show()
+
+# 5. Apply KMeans with optimal k (assume k=3 based on elbow)
+optimal_k = 3
+kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
+cluster_labels = kmeans.fit_predict(scaled_data)
+
+# Add cluster labels to DataFrame
+df_cluster['Cluster'] = cluster_labels
+
+# 6. Visualize Clusters (2D)
+# Using 'open' vs 'close' for visualization
+plt.figure(figsize=(8, 6))
+sns.scatterplot(
+    x=df_cluster['open'], 
+    y=df_cluster['close'], 
+    hue=df_cluster['Cluster'], 
+    palette='Set1'
+)
+plt.title('K-Means Clusters (Open vs Close)')
+plt.xlabel('Open Price')
+plt.ylabel('Close Price')
+plt.legend(title='Cluster')
+plt.tight_layout()
+plt.savefig(r"C:\Users\sansk\Documents\Codveda technologies\KMeans_Clusters.png")
+plt.show()
